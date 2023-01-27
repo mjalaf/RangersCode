@@ -1,16 +1,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine3.17 AS build
 # Create a working directory
 RUN mkdir -p /app
-
-#ENV DOTNET_URLS=http://+:5203
-
 WORKDIR /app
+#ENV DOTNET_URLS=http://+:5203
+EXPOSE 8080
+EXPOSE 443
+
+
 
 # Copy the project files
 COPY . .
 
 # Restore the project dependencies
-RUN dotnet restore
+RUN dotnet restore "renger-default-api.csproj"
 
 # Build the project
 RUN dotnet publish -c Release -o out
