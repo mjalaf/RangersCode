@@ -19,7 +19,7 @@ on:
     - .github/workflows/default-api.yml
 env:
   SERVICE: default-api
-  IMAGE: default.api
+  IMAGE: default-api
 
 jobs:
 
