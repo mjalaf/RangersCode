@@ -1,0 +1,8 @@
+version: '3.9'
+
+services:
+  default-api:
+    image: ${REGISTRY:-ranger}/basket.api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Services/poc/ranger-default-api/Dockerfile
