@@ -5,4 +5,4 @@ services:
     image: ${REGISTRY:-ranger}/default-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: .
-      dockerfile: Services/poc/ranger-default-api/Dockerfile
+      dockerfile: Services/poc/renger-default-api/Dockerfile
