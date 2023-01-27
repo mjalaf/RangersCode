@@ -51,7 +51,7 @@ END
 }
 
 acr_connected=''
-app_name='eshop'
+app_name='rangercode'
 aks_name=''
 aks_rg=''
 chart=''
@@ -63,7 +63,7 @@ dns=''
 image_tag='latest'
 skip_infrastructure=''
 use_local_k8s=''
-namespace='eshop'
+namespace='ranger'
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
