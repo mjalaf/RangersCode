@@ -6,11 +6,9 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 443
 
-
-
 # Copy the project files
-COPY . .
-
+COPY /Services/poc/renger-default-api .
+RUN ls
 # Restore the project dependencies
 RUN dotnet restore "renger-default-api.csproj"
 
