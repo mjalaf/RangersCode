@@ -1,35 +1,61 @@
 name: Deploy default-api
 
 on:
-  workflow_dispatch:
-  repository_dispatch:
-    types:
-    - deploy
-  workflow_run:
-    workflows: ["default-api"]
-    branches: [main]
-    types: [completed]
+  push:
+    branches: ["main"]
 
 env:
   CHART: default-api
   NAMESPACE: ranger
-  CHART_ROOT: deploy/k8s/helm
-
+  CHART_ROOT: deploy/k8s/helm/ranger-api
+  CONTAINER_NAME: rangercode/default-api
+  CHART_OVERRIDE_PATH: rangercode/default-api
+  
 jobs:
   deploy-to-k8s:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     #if: false
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: ./.github/workflows/composite/deploy-helm
+      - name: Azure login
+        uses: azure/login@v1.4.6
         with:
-          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-          cluster_name: ${{ secrets.CLUSTER_NAME }}
-          resource_group: ${{ secrets.RESOURCE_GROUP }}
-          registry_host: ${{ secrets.REGISTRY_HOST }}
-          chart: ${{ env.CHART }}
-          chart_root: ${{ env.CHART_ROOT }}
-          namespace: ${{ env.NAMESPACE }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Use kubelogin to configure your kubeconfig for Azure auth
+      - name: Set up kubelogin for non-interactive login
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.25'
+
+      # Retrieves your Azure Kubernetes Service cluster's kubeconfig file
+      - name: Get K8s context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      # Runs Helm to create manifest files
+      - name: Bake deployment
+        uses: azure/k8s-bake@v2
+        with:
+          renderEngine: "helm"
+          helmChart: ${{ env.CHART_ROOT }}
+          overrideFiles: ${{ env.CHART_OVERRIDE_PATH }}
+          overrides: |
+            replicas:2
+          helm-version: "latest"
+        id: bake
+
+      # Deploys application based on manifest files from previous step
+      - name: Deploy application
+        uses: Azure/k8s-deploy@v4
+        with:
+          action: deploy
+          manifests: ${{ steps.bake.outputs.manifestsBundle }}
+          images: |
+            ${{ secrets.REGISTRY_HOST }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
